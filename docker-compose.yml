@@ -10,7 +10,10 @@ services:
     restart: unless-stopped
 
     ports:
-      - "8000:8000"
+      # Bound to loopback only: reachable from other processes/containers on
+      # this VM (and from nginx for the public route) but never directly from
+      # the network. Public access must go through nginx's token-checked proxy.
+      - "127.0.0.1:8000:8000"
 
     environment:
       # ── SQL Server connection ────────────────────────────────
