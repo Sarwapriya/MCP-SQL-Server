@@ -89,9 +89,9 @@ services:
     container_name: mcp-mssql-redis
     restart: unless-stopped
 
-    ports:
-      - "6379:6379"
-
+    # No published port: only mcp-mssql needs this, reached over the internal
+    # mcp-network by service name ("redis"). Nothing external should ever
+    # need to reach Redis directly, and it has no auth configured.
     command: >
       redis-server
       --maxmemory 256mb
