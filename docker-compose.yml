@@ -1,0 +1,117 @@
+services:
+
+  # ── MCP MSSQL Server ───────────────────────────────────────
+  mcp-mssql:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: mcp-mssql
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      # ── SQL Server connection ────────────────────────────────
+      MSSQL_SERVER: ${MSSQL_SERVER}
+      MSSQL_DATABASE: ${MSSQL_DATABASE}
+      MSSQL_USERNAME: ${MSSQL_USERNAME}
+      MSSQL_PASSWORD: ${MSSQL_PASSWORD}
+      MSSQL_PORT: ${MSSQL_PORT:-1433}
+      MSSQL_DRIVER: ${MSSQL_DRIVER:-ODBC Driver 18 for SQL Server}
+      MSSQL_ENCRYPT: ${MSSQL_ENCRYPT:-false}
+      MSSQL_TRUST_SERVER_CERT: ${MSSQL_TRUST_SERVER_CERT:-true}
+
+      # ── Connection pool ──────────────────────────────────────
+      POOL_SIZE: ${POOL_SIZE:-10}
+      POOL_MAX_OVERFLOW: ${POOL_MAX_OVERFLOW:-20}
+      POOL_TIMEOUT: ${POOL_TIMEOUT:-30}
+      POOL_RECYCLE: ${POOL_RECYCLE:-3600}
+
+      # ── Query safety ─────────────────────────────────────────
+      MAX_ROWS: ${MAX_ROWS:-10000}
+      QUERY_TIMEOUT: ${QUERY_TIMEOUT:-120}
+      ALLOW_WRITE_OPERATIONS: ${ALLOW_WRITE_OPERATIONS:-false}
+
+      # ── Redis cache ──────────────────────────────────────────
+      REDIS_ENABLED: "true"
+      REDIS_URL: "redis://redis:6379"
+      SCHEMA_CACHE_TTL: ${SCHEMA_CACHE_TTL:-3600}
+
+      # ── Server ───────────────────────────────────────────────
+      TRANSPORT: "streamable-http"    # ← changed from "sse"
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    env_file:
+      - .env
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    networks:
+      - mcp-network
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # ── Healthcheck ───────────────────────────────────────────
+    # FastMCP streamable-http responds to POST /mcp/
+    # Use GET with accept header — returns 405 not 404, meaning server is up
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/mcp/ | grep -qE '(200|405|406)'"
+      ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Redis (Schema Cache) ────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-mssql-redis
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+
+    networks:
+      - mcp-network
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: mcp-network

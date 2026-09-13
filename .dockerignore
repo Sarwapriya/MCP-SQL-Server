@@ -1,0 +1,58 @@
+# ─────────────────────────────────────────────────────────────
+# .dockerignore — keeps Docker build context lean and secure
+# ─────────────────────────────────────────────────────────────
+
+# Virtual environment — rebuilt inside container
+.venv/
+venv/
+env/
+
+# Credentials — never copy into image
+#.env
+#*.env
+#!.env.example
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Tests — not needed in production image
+tests/
+test_*.py
+*_test.py
+pytest.ini
+.pytest_cache/
+
+# Dev tools
+.vscode/
+.idea/
+pyrightconfig.json
+.mypy_cache/
+.ruff_cache/
+
+# Git
+.git/
+.gitignore
+
+# Docker files themselves
+Dockerfile*
+docker-compose*.yml
+
+# Docs
+*.md
+README*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
