@@ -60,17 +60,23 @@ services:
 
     networks:
       - mcp-network
+      # Shares a network with the ax-hub-gateway nginx container (from the
+      # separate formiq app stack) so nginx can reach this container by name
+      # ("mcp-mssql") for the public /mcp-sql/ route. Network is created by
+      # that other stack — declared external below, not owned by this one.
+      - formiq-net
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
     # ── Healthcheck ───────────────────────────────────────────
-    # FastMCP streamable-http responds to POST /mcp/
-    # Use GET with accept header — returns 405 not 404, meaning server is up
+    # FastMCP streamable-http's real endpoint is /mcp (no trailing slash) —
+    # GET /mcp/ 307-redirects to /mcp, and a bare GET /mcp returns 400 (wrong
+    # request shape for a real MCP call, but proves the server is up).
     healthcheck:
       test: [
         "CMD-SHELL",
-        "curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/mcp/ | grep -qE '(200|405|406)'"
+        "curl -sf -o /dev/null -w '%{http_code}' http://localhost:8000/mcp | grep -qE '(200|307|400|405|406)'"
       ]
       interval: 30s
       timeout: 10s
@@ -118,3 +124,5 @@ networks:
   mcp-network:
     driver: bridge
     name: mcp-network
+  formiq-net:
+    external: true
