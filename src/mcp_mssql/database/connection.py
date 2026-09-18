@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import QueuePool
@@ -12,8 +14,10 @@ def build_connection_url(conn: ConnectionSettings) -> str:
     driver = conn.driver.replace(" ", "+")
     encrypt = "yes" if conn.encrypt else "no"
     trust = "yes" if conn.trust_server_cert else "no"
+    username = quote_plus(conn.username)
+    password = quote_plus(conn.password)
     return (
-        f"mssql+pyodbc://{conn.username}:{conn.password}"
+        f"mssql+pyodbc://{username}:{password}"
         f"@{conn.server},{conn.port}/{conn.database}"
         f"?driver={driver}&Encrypt={encrypt}&TrustServerCertificate={trust}"
     )
