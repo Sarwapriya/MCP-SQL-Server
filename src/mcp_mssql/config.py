@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     MSSQL_USERNAME: str = Field(default="sa")
     MSSQL_PASSWORD: str = Field(default="your_password")
     MSSQL_PORT: int = Field(default=1433)
-    MSSQL_DRIVER: str = Field(default="ODBC Driver 18 for SQL Server")
+    MSSQL_DRIVER: str = Field(default="ODBC Driver 17 for SQL Server")
     MSSQL_ENCRYPT: bool = Field(default=True)
     MSSQL_TRUST_SERVER_CERT: bool = Field(default=False)
 
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     MSSQL2_USERNAME: str = Field(default="sa")
     MSSQL2_PASSWORD: str = Field(default="")
     MSSQL2_PORT: int = Field(default=1433)
-    MSSQL2_DRIVER: str = Field(default="ODBC Driver 18 for SQL Server")
+    MSSQL2_DRIVER: str = Field(default="ODBC Driver 17 for SQL Server")
     MSSQL2_ENCRYPT: bool = Field(default=True)
     MSSQL2_TRUST_SERVER_CERT: bool = Field(default=False)
 
